@@ -1,0 +1,5 @@
+**/**/__pycache__/
+.idea/
+**/**/*.txt
+!sample_input.txt
+dev/

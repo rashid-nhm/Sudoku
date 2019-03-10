@@ -48,6 +48,8 @@ class _Cell:
 
 
 class _Region:
+    __slots__ = ["__cells", "cells"]
+
     def __init__(self) -> None:
         self.__cells: List[Optional[_Cell]] = [None,
                                                _Cell(), _Cell(), _Cell(),
@@ -68,12 +70,10 @@ class _Region:
         return all([cell.is_solved() for cell in self.cells])
 
 
-class _Row:
-    def __init__(self, id: int, *cells: _Cell):
-        self.id = id
-
-        assert len(cells) == 9, "9 cells must be passed to create a full row"
-        assert all(isinstance(cell, _Cell) for cell in cells), "All cells passed to Row must be of instance Cell"
+class _Line:
+    def __init__(self,  *cells: _Cell):
+        assert len(cells) == 9, "9 cells must be passed to create a full line"
+        assert all(isinstance(cell, _Cell) for cell in cells), "All cells passed to a line must be of instance Cell"
 
         self.__cells: List[_Cell] = cells
 
@@ -98,69 +98,39 @@ class _Column:
 
 
 class Board:
-    def __init__(self, file: str=None) -> None:
+    def __init__(self, file: str = None) -> None:
         self.__regions = [None,
                           _Region(), _Region(), _Region(),
                           _Region(), _Region(), _Region(),
                           _Region(), _Region(), _Region()]
-        self.__rows: List[Optional[List[_Cell]]] = [None,
-                                                    [self[1][1], self[1][2], self[1][3],
-                                                     self[2][1], self[2][2], self[2][3],
-                                                     self[3][1], self[3][2], self[3][3]],
-                                                    [self[1][4], self[1][5], self[1][6],
-                                                     self[2][4], self[2][5], self[2][6],
-                                                     self[3][4], self[3][5], self[3][6]],
-                                                    [self[1][7], self[1][8], self[1][9],
-                                                     self[2][7], self[2][8], self[2][9],
-                                                     self[3][7], self[3][8], self[3][9]],
-                                                    [self[4][1], self[4][2], self[4][3],
-                                                     self[5][1], self[5][2], self[5][3],
-                                                     self[6][1], self[6][2], self[6][3]],
-                                                    [self[4][4], self[4][5], self[4][6],
-                                                     self[5][4], self[5][5], self[5][6],
-                                                     self[6][4], self[6][5], self[6][6]],
-                                                    [self[4][7], self[4][8], self[4][9],
-                                                     self[5][7], self[5][8], self[5][9],
-                                                     self[6][7], self[6][8], self[6][9]],
-                                                    [self[7][1], self[7][2], self[7][3],
-                                                     self[8][1], self[8][2], self[8][3],
-                                                     self[9][1], self[9][2], self[9][3]],
-                                                    [self[7][4], self[7][5], self[7][6],
-                                                     self[8][4], self[8][5], self[8][6],
-                                                     self[9][4], self[9][5], self[9][6]],
-                                                    [self[7][7], self[7][8], self[7][9],
-                                                     self[8][7], self[8][8], self[8][9],
-                                                     self[9][7], self[9][8], self[9][9]]
-                                                    ]
-        self.__columns: List[Optional[List[_Cell]]] = [None,
-                                                       [self[1][1], self[1][4], self[1][7],
-                                                        self[4][1], self[4][4], self[4][7],
-                                                        self[7][1], self[7][4], self[7][7]],
-                                                       [self[1][2], self[1][5], self[1][8],
-                                                        self[4][2], self[4][5], self[4][8],
-                                                        self[7][2], self[7][5], self[7][8]],
-                                                       [self[1][3], self[1][6], self[1][9],
-                                                        self[4][3], self[4][6], self[4][9],
-                                                        self[7][3], self[7][6], self[7][9]],
-                                                       [self[2][1], self[2][4], self[2][7],
-                                                        self[5][1], self[5][4], self[5][7],
-                                                        self[8][1], self[8][4], self[8][7]],
-                                                       [self[2][2], self[2][5], self[2][8],
-                                                        self[5][2], self[5][5], self[5][8],
-                                                        self[8][2], self[8][5], self[8][8]],
-                                                       [self[2][3], self[2][6], self[2][9],
-                                                        self[5][3], self[5][6], self[5][9],
-                                                        self[8][3], self[8][6], self[8][9]],
-                                                       [self[3][1], self[3][4], self[3][7],
-                                                        self[6][1], self[6][4], self[6][7],
-                                                        self[9][1], self[9][4], self[9][7]],
-                                                       [self[3][2], self[3][5], self[3][8],
-                                                        self[6][2], self[6][5], self[6][8],
-                                                        self[9][2], self[9][5], self[9][8]],
-                                                       [self[3][3], self[3][6], self[3][9],
-                                                        self[6][3], self[6][6], self[6][9],
-                                                        self[9][3], self[9][6], self[9][9]]
-                                                       ]
+
+        self.__rows: List[Optional[_Line]] = [None,
+                                              _Line(self[1][1], self[1][2], self[1][3], self[2][1], self[2][2], self[2][3], self[3][1], self[3][2], self[3][3]),
+                                              _Line(self[1][4], self[1][5], self[1][6], self[2][4], self[2][5], self[2][6], self[3][4], self[3][5], self[3][6]),
+                                              _Line(self[1][7], self[1][8], self[1][9], self[2][7], self[2][8], self[2][9], self[3][7], self[3][8], self[3][9]),
+
+                                              _Line(self[4][1], self[4][2], self[4][3], self[5][1], self[5][2], self[5][3], self[6][1], self[6][2], self[6][3]),
+                                              _Line(self[4][4], self[4][5], self[4][6], self[5][4], self[5][5], self[5][6], self[6][4], self[6][5], self[6][6]),
+                                              _Line(self[4][7], self[4][8], self[4][9], self[5][7], self[5][8], self[5][9], self[6][7], self[6][8], self[6][9]),
+
+                                              _Line(self[7][1], self[7][2], self[7][3], self[8][1], self[8][2], self[8][3], self[9][1], self[9][2], self[9][3]),
+                                              _Line(self[7][4], self[7][5], self[7][6], self[8][4], self[8][5], self[8][6], self[9][4], self[9][5], self[9][6]),
+                                              _Line(self[7][7], self[7][8], self[7][9], self[8][7], self[8][8], self[8][9], self[9][7], self[9][8], self[9][9])
+                                              ]
+
+        self.__columns: List[Optional[_Line]] = [None,
+                                                 _Line(self[1][1], self[1][4], self[1][7], self[4][1], self[4][4], self[4][7], self[7][1], self[7][4], self[7][7]),
+                                                 _Line(self[1][2], self[1][5], self[1][8], self[4][2], self[4][5], self[4][8], self[7][2], self[7][5], self[7][8]),
+                                                 _Line(self[1][3], self[1][6], self[1][9], self[4][3], self[4][6], self[4][9], self[7][3], self[7][6], self[7][9]),
+
+                                                 _Line(self[2][1], self[2][4], self[2][7], self[5][1], self[5][4], self[5][7], self[8][1], self[8][4], self[8][7]),
+                                                 _Line(self[2][2], self[2][5], self[2][8], self[5][2], self[5][5], self[5][8], self[8][2], self[8][5], self[8][8]),
+                                                 _Line(self[2][3], self[2][6], self[2][9], self[5][3], self[5][6], self[5][9], self[8][3], self[8][6], self[8][9]),
+
+                                                 _Line(self[3][1], self[3][4], self[3][7], self[6][1], self[6][4], self[6][7], self[9][1], self[9][4], self[9][7]),
+                                                 _Line(self[3][2], self[3][5], self[3][8], self[6][2], self[6][5], self[6][8], self[9][2], self[9][5], self[9][8]),
+                                                 _Line(self[3][3], self[3][6], self[3][9], self[6][3], self[6][6], self[6][9], self[9][3], self[9][6], self[9][9])
+                                                 ]
         if file:
             self.parse(file=file)
 
