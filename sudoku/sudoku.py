@@ -10,8 +10,12 @@ class _Cell:
         self.__value: int = 0
 
     @property
-    def candidates(self) -> List[bool]:
-        return self.__candidates
+    def candidates(self) -> List[int]:
+        return [i+1 for i, c in enumerate(self.__candidates) if c]
+
+    @property
+    def num_possible_values(self) -> int:
+        return len([candidate for candidate in self.candidates if candidate])
 
     def candidate(self, i: int) -> Optional[bool]:
         return self[i]
@@ -187,89 +191,55 @@ class Board:
     def draw(self) -> None:
         print(str(self))
 
+    @staticmethod
+    def __remove_candidates(areas):
+        for area in areas:
+            if area.is_solved():
+                continue
+            for i, sub_cell in enumerate(area.cells):
+                if sub_cell.value:
+                    for j, sub_cell2 in enumerate(area.cells):
+                        if i == j:  # Same cell
+                            continue
+                        if not sub_cell2.value and sub_cell2[sub_cell.value-1]:
+                            sub_cell2[sub_cell.value-1] = False
+
+    @staticmethod
+    def __remove_singularity(areas):
+        for area in areas:
+            if area.is_solved():
+                continue
+            for i, sub_cell in enumerate(area.cells):
+                if not sub_cell.value:
+                    for candidate in sub_cell.candidates:
+                        singular = True
+                        for sub_cell2 in area.cells[i+1:]:
+                            if sub_cell2.value == candidate or not sub_cell2.value and sub_cell2[candidate-1]:
+                                singular = False
+                                break
+                        if singular:
+                            sub_cell.value = candidate
+
     def update(self) -> None:
-        # Remove candidates from regions
-        for region in self.regions:
-            if region.is_solved():
-                continue
-            for cell1 in region.cells:
-                if cell1.value:
-                    for cell2 in region.cells:
-                        if not cell2.value and cell2[cell1.value]:
-                            cell2[cell1.value] = False
+        if self.is_solved():  # Nothing to update
+            return None
 
-        # Remove candidates from same row
-        for row in self.rows:
-            if row.is_solved():
-                continue
-            for cell1 in row:
-                if cell1.value:
-                    for cell2 in row:
-                        if not cell2.value and cell2[cell1.value]:
-                            cell2[cell1.value] = False
-
-        # Remove candidates from same column
-        for column in self.columns:
-            if column.is_solved():
-                continue
-            for cell1 in column:
-                if cell1.value:
-                    for cell2 in column:
-                        if not cell2.value and cell2[cell1.value]:
-                            cell2[cell1.value] = False
+        self.__remove_candidates(self.regions)
+        self.__remove_candidates(self.rows)
+        self.__remove_candidates(self.columns)
 
         # Set value if only 1 candidate
         for region in self.regions:
             if region.is_solved():
                 continue
             for cell in region.cells:
-                if not cell.value and len(cell.candidates) == 1:
+                if cell.num_possible_values == 1:
                     cell.value = cell.candidates[0]
 
         # Singularity in region
-        for region in self.regions:
-            if region.is_solved():
-                continue
-            for cell1 in region:
-                if not cell1.value:
-                    for candidate in cell1.candidates:
-                        singularity = True
-                        for cell2 in region:
-                            if cell1 != cell2 and not cell2.value and cell2[candidate]:
-                                singularity = False
-                                break
-                        if singularity:
-                            cell1.value = candidate
-
-        # Singularity in rows
-        for row in self.rows:
-            if all([cell.is_solved() for cell in row]):  # row.is_solved()
-                continue
-            for cell1 in row:
-                if not cell1.value:
-                    for candidate in cell1.candidates:
-                        singularity = True
-                        for cell2 in row:
-                            if cell1 != cell2 and not cell2.value and cell2[candidate]:
-                                singularity = False
-                                break
-                        if singularity:
-                            cell1.value = candidate
-
-        # Singularity in columns
-        for column in self.columns:
-            if all([cell.is_solved() for cell in column]):  # column.is_solved()
-                continue
-            for cell1 in column:
-                if not cell1.value:
-                    for candidate in cell1.candidates:
-                        singularity = True
-                        for cell2 in column:
-                            if cell1 != cell2 and not cell2.value and cell2[candidate]:
-                                singularity = False
-                                break
-                        if singularity:
-                            cell1.value = candidate
+        # self.__remove_singularity(self.regions)
+        # self.__remove_singularity(self.rows)
+        # self.__remove_singularity(self.columns)
 
     def solve(self) -> None:
         pass
